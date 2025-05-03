@@ -96,27 +96,6 @@ resource "aws_security_group" "private_security" {
     protocol    = "tcp"
     security_groups = [ aws_security_group.public_security.id ]
   }
-  ingress {
-    from_port   = 3306
-    to_port     = 3306
-    protocol    = "tcp"
-    security_groups = [ aws_security_group.private_security.id ]
-  }
-
-  ingress {
-  description = "Allow internal traffic between private instances"
-  from_port   = 0
-  to_port     = 65535
-  protocol    = "tcp"
-  security_groups = [aws_security_group.private_security.id]
- }
-
-  ingress {
-    from_port   = 8081
-    to_port     = 8081
-    protocol    = "tcp"
-    security_groups = [ aws_security_group.private_security.id ]
-  }
 
    egress {
     from_port   = 0
@@ -127,6 +106,37 @@ resource "aws_security_group" "private_security" {
   } 
 }
 
+resource "aws_security_group_rule" "allow_internal_traffic" {
+  type                     = "ingress"
+  from_port                = 0
+  to_port                  = 65535
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.private_security.id
+  source_security_group_id = aws_security_group.private_security.id
+  description              = "Allow internal traffic between instances with same SG"
+}
+
+resource "aws_security_group_rule" "allow_db_connections" {
+  type                     = "ingress"
+  from_port                = 3306
+  to_port                  = 3306
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.private_security.id
+  source_security_group_id = aws_security_group.private_security.id
+  description              = "Allow DB connections from instances with same SG"
+  
+}
+
+resource "aws_security_group_rule" "allow_jwt_connections" {
+  type                     = "ingress"
+  from_port                = 8081
+  to_port                  = 8081
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.private_security.id
+  source_security_group_id = aws_security_group.private_security.id
+  description              = "Allow JWT connections from instances with same SG"
+  
+}
 
 resource "aws_internet_gateway" "igw" {
   vpc_id = local.vpc_id

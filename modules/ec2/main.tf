@@ -15,30 +15,7 @@ resource "aws_instance" "app_instance" {
   key_name               = var.key_pair_name
   vpc_security_group_ids = [var.security_group_id]
 
-
- provisioner "file" {
-      source      = "aaaaaaaaaaaaa"
-      destination = "/aaaa/aaaaaaaa/aaaaaaaaa"
-
-    connection {
-      type        = "ssh"
-      host        = self.public_ip #????
-      user        = "ubuntu"
-      private_key = "${file("mysshkey.pem")}"
-    }
-  }
-  provisioner "remote-exec" {
-    inline = [
-      "chmod +x /aaaaa/aaaaaaa/aaaaaaaaaaaaaa",
-      "sh /aaaa/aaaa/aaaaaaaa",
-    ]
-    connection {
-      type        = "ssh"
-      host        = self.public_ip
-      user        = "ubuntu"
-      private_key = "${file("mysshkey.pem")}"
-    }
-  }
+  user_data              = file("${path.module}/script.sh")
 
   tags = {
     Name = var.instance_name
