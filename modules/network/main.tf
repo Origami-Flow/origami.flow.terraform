@@ -48,7 +48,7 @@ resource "aws_security_group" "public_security" {
         protocol    = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
-
+    
     ingress {
         from_port   = 443
         to_port     = 443
@@ -100,7 +100,22 @@ resource "aws_security_group" "private_security" {
     from_port   = 3306
     to_port     = 3306
     protocol    = "tcp"
-    security_groups = [ aws_security_group.public_security.id ]
+    security_groups = [ aws_security_group.private_security.id ]
+  }
+
+  ingress {
+  description = "Allow internal traffic between private instances"
+  from_port   = 0
+  to_port     = 65535
+  protocol    = "tcp"
+  security_groups = [aws_security_group.private_security.id]
+ }
+
+  ingress {
+    from_port   = 8081
+    to_port     = 8081
+    protocol    = "tcp"
+    security_groups = [ aws_security_group.private_security.id ]
   }
 
    egress {
@@ -108,6 +123,7 @@ resource "aws_security_group" "private_security" {
     to_port     = 0
     protocol    = "-1" 
     security_groups = [ aws_security_group.public_security.id ]
+    cidr_blocks = ["0.0.0.0/0"]
   } 
 }
 
@@ -273,6 +289,28 @@ resource "aws_network_acl_rule" "public_22_outbound_rule" {
   cidr_block     = "0.0.0.0/0"
   from_port      = 22
   to_port        = 22
+}
+
+// db port
+resource "aws_network_acl_rule" "port_3306_rule" {
+  network_acl_id = aws_network_acl.private_nacl.id
+  rule_number    = 500
+  protocol       = "tcp"
+  rule_action    = "allow"
+  cidr_block     = "0.0.0.0/0"
+  from_port      = 3306
+  to_port        = 3306
+}
+
+//jwt port
+resource "aws_network_acl_rule" "port_8081_rule" {
+  network_acl_id = aws_network_acl.private_nacl.id
+  rule_number    = 600
+  protocol       = "tcp"
+  rule_action    = "allow"
+  cidr_block     = "0.0.0.0/0"
+  from_port      = 8081
+  to_port        = 8081
 }
 
 resource "aws_network_acl_rule" "private_inbound_rule_all" {
